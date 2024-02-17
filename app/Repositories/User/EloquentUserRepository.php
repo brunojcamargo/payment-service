@@ -31,6 +31,7 @@ class EloquentUserRepository implements UserRepositoryInterface
     public function createOrFail(array $data): ?User
     {
         try {
+            $data['password'] = bcrypt($data['password']);
             $user = User::create($data);
 
             return $user;
