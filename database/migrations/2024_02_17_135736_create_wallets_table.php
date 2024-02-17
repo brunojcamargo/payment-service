@@ -13,9 +13,8 @@ return new class extends Migration
     {
         Schema::create('wallets', function (Blueprint $table) {
             $table->uuid('id')->unique();
-            $table->foreignUuid('userId')->references('id')
-                ->on('users')
-                ->onDelete('cascade');
+            $table->foreignUuid('user_id')->references('id')
+                ->on('users');
             $table->decimal('balance', 10, 2)->default(0);
             $table->timestamps();
             $table->softDeletes();
