@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class User extends Model
+class Wallet extends Model
 {
     use HasFactory, SoftDeletes, UuidableTrait;
 
@@ -17,19 +17,16 @@ class User extends Model
 
     protected $fillable = [
         'id',
-        'fullName',
-        'document',
-        'email',
-        'password',
-        'type',
+        'userId',
+        'balance'
     ];
 
-    protected $hidden = [
-        'password'
+    protected $casts = [
+        'balance' => 'decimal:2',
     ];
 
-    public function wallet()
+    public function user()
     {
-        return $this->hasOne(Wallet::class);
+        return $this->belongsTo(User::class);
     }
 }
