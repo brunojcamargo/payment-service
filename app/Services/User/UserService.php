@@ -55,7 +55,7 @@ class UserService
             return $this->response;
         }
 
-        $this->response->data->push($allUsers);
+        $this->response->data = $allUsers->values();
 
         return $this->response;
     }
