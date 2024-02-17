@@ -7,6 +7,7 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Repositories\Wallet\WalletRepositoryInterface;
+use App\Services\Transaction\TransactionService;
 use App\Services\User\Responses\UserResponse;
 use App\Services\User\UserService;
 use App\Services\Wallet\Responses\WalletResponse;
@@ -18,6 +19,7 @@ class WalletService
     protected WalletRepositoryInterface $walletRepository;
     protected WalletResponse $response;
     protected UserService $userService;
+    protected TransactionService $transactionService;
 
     public function create(array $data): WalletResponse
     {
@@ -193,6 +195,8 @@ class WalletService
                 return false;
             }
             DB::commit();
+            $this->transactionService = new TransactionService;
+            $this->transactionService->dispatchJobNotification();
             return true;
         }
         DB::rollBack();

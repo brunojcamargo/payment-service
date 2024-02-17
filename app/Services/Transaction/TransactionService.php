@@ -2,9 +2,11 @@
 
 namespace App\Services\Transaction;
 
+use App\Jobs\NotificationJob;
 use App\Jobs\PaymentValidationJob;
 use App\Models\Transaction;
 use App\Repositories\Transaction\TransactionRepositoryInterface;
+use App\Services\External\NotificationService;
 use App\Services\External\PaymentValidationService;
 use App\Services\Transaction\Requests\TransactionRequest;
 use App\Services\Transaction\Responses\TransactionResponse;
@@ -76,6 +78,11 @@ class TransactionService
     public function dispatchJobValidPayment(Transaction $transaction)
     {
         dispatch(new PaymentValidationJob($transaction, app(TransactionService::class), app(PaymentValidationService::class)));
+    }
+
+    public function dispatchJobNotification()
+    {
+        dispatch(new NotificationJob(app(NotificationService::class)));
     }
 
     public function newTransaction(array $data) : TransactionResponse
