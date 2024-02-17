@@ -3,9 +3,12 @@
 namespace App\Services\Wallet;
 
 use App\Jobs\CreateWalletJob;
+use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Repositories\Wallet\WalletRepositoryInterface;
+use App\Services\User\Responses\UserResponse;
+use App\Services\User\UserService;
 use App\Services\Wallet\Responses\WalletResponse;
 use Illuminate\Http\Response;
 
@@ -13,7 +16,8 @@ class WalletService
 {
     public function __construct(
         protected WalletRepositoryInterface $walletRepository,
-        protected WalletResponse $response
+        protected WalletResponse $response,
+        protected UserService $userService
     ) {
     }
 
@@ -91,5 +95,40 @@ class WalletService
     public function dispatchJobCreate(User $user)
     {
         dispatch(new CreateWalletJob($user, app(WalletService::class)));
+    }
+
+    private function addAmountInBalance(Wallet $wallet, float $ammount) : bool
+    {
+        $newValue = $wallet->balance + $ammount;
+        $updateData = [
+            'balance' => $newValue
+        ];
+
+        $update = $this->walletRepository->updateOrFail($wallet->id, $updateData);
+        if($update instanceof Wallet){
+            return true;
+        }
+
+        return false;
+    }
+
+    public function updateBalance(Transaction $transaction)
+    {
+        if($transaction->type == 'deposit')
+        {
+            $userResponse = $this->userService->findById($transaction->to);
+            if($userResponse instanceof UserResponse){
+                if($userResponse->error){
+                    return false;
+                }
+                $wallet = $userResponse->data->first()->wallet()->first();
+                if($wallet instanceof Wallet){
+                    return $this->addAmountInBalance($wallet, $transaction->value);
+                }
+            }
+
+        }
+
+        return false;
     }
 }

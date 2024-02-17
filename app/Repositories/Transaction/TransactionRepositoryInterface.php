@@ -17,4 +17,6 @@ interface TransactionRepositoryInterface
     public function updateOrFail($id, array $data) : ?Transaction;
 
     public function deleteOrFail($id) : bool;
+
+    public function updateInstance(Transaction $transaction, array $data) : ?Transaction;
 }

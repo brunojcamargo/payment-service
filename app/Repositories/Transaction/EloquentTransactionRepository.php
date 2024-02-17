@@ -54,6 +54,16 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
         return null;
     }
 
+    public function updateInstance(Transaction $transaction, array $data): ?Transaction
+    {
+        try {
+            $transaction->update($data);
+            return $transaction;
+        } catch (QueryException $e) {
+            $this->log(true, __FUNCTION__, $e->getMessage());
+        }
+    }
+
     public function deleteOrFail($id): bool
     {
         try {

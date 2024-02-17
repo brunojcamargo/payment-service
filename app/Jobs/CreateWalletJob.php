@@ -36,7 +36,7 @@ class CreateWalletJob implements ShouldQueue
     public function handle(): void
     {
         try {
-            $this->walletService->create(['userId' => $this->user->id]);
+            $this->walletService->create(['user_id' => $this->user->id]);
         } catch (\Exception $e) {
             Log::error('Falha ao processar o job CreateWalletJob: ' . $e->getMessage());
         }
