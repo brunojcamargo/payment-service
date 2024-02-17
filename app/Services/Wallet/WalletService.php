@@ -2,6 +2,8 @@
 
 namespace App\Services\Wallet;
 
+use App\Jobs\CreateWalletJob;
+use App\Models\User;
 use App\Models\Wallet;
 use App\Repositories\Wallet\WalletRepositoryInterface;
 use App\Services\Wallet\Responses\WalletResponse;
@@ -84,5 +86,10 @@ class WalletService
 
         $this->response->code = Response::HTTP_NO_CONTENT;
         return $this->response;
+    }
+
+    public function dispatchJobCreate(User $user)
+    {
+        dispatch(new CreateWalletJob($user, app(WalletService::class)));
     }
 }
