@@ -9,15 +9,13 @@ use Illuminate\Http\Response;
 
 class UserService
 {
-    public function __construct(
-        protected UserRepositoryInterface $userRepository,
-        protected UserResponse $response
-    ) {
-    }
+    protected UserRepositoryInterface $userRepository;
+    protected UserResponse $response;
 
     public function create(array $data): UserResponse
     {
-        //@todo reaproveitar/restaurar usuarios excluidos
+        $this->userRepository = app(UserRepositoryInterface::class);
+        $this->response = new UserResponse;
 
         $newUser = $this->userRepository->createOrFail($data);
         if (!$newUser instanceof User) {
@@ -34,6 +32,9 @@ class UserService
 
     public function findById(string $id): UserResponse
     {
+        $this->userRepository = app(UserRepositoryInterface::class);
+        $this->response = new UserResponse;
+
         $user = $this->userRepository->findOrFail($id);
         if (!$user instanceof User) {
             $this->response->error = true;
@@ -48,6 +49,9 @@ class UserService
 
     public function findAll(): UserResponse
     {
+        $this->userRepository = app(UserRepositoryInterface::class);
+        $this->response = new UserResponse;
+
         $allUsers = $this->userRepository->getAll();
 
         if ($allUsers->isEmpty()) {
@@ -62,7 +66,8 @@ class UserService
 
     public function update(string $id, array $data): UserResponse
     {
-        //@todo validar se o type realmente pode ser ultilizado
+        $this->userRepository = app(UserRepositoryInterface::class);
+        $this->response = new UserResponse;
 
         $user = $this->userRepository->updateOrFail($id, $data);
         if (!$user instanceof User) {
@@ -78,6 +83,9 @@ class UserService
 
     public function delete(string $id): UserResponse
     {
+        $this->userRepository = app(UserRepositoryInterface::class);
+        $this->response = new UserResponse;
+
         if (!$this->userRepository->deleteOrFail($id)) {
             $this->response->error = true;
             $this->response->code = Response::HTTP_NOT_FOUND;

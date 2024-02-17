@@ -14,15 +14,14 @@ use Illuminate\Http\Response;
 
 class WalletService
 {
-    public function __construct(
-        protected WalletRepositoryInterface $walletRepository,
-        protected WalletResponse $response,
-        protected UserService $userService
-    ) {
-    }
+    protected WalletRepositoryInterface $walletRepository;
+    protected WalletResponse $response;
+    protected UserService $userService;
 
     public function create(array $data): WalletResponse
     {
+        $this->response = new WalletResponse;
+        $this->walletRepository =  app(WalletRepositoryInterface::class);
 
         $newWallet = $this->walletRepository->createOrFail($data);
         if (!$newWallet instanceof Wallet) {
@@ -39,6 +38,9 @@ class WalletService
 
     public function findById(string $id): WalletResponse
     {
+        $this->response = new WalletResponse;
+        $this->walletRepository = app(WalletRepositoryInterface::class);
+
         $wallet = $this->walletRepository->findOrFail($id);
         if (!$wallet instanceof Wallet) {
             $this->response->error = true;
@@ -53,6 +55,9 @@ class WalletService
 
     public function findAll(): WalletResponse
     {
+        $this->response = new WalletResponse;
+        $this->walletRepository = app(WalletRepositoryInterface::class);
+
         $allWallets = $this->walletRepository->getAll();
 
         if ($allWallets->isEmpty()) {
@@ -67,6 +72,8 @@ class WalletService
 
     public function update(string $id, array $data): WalletResponse
     {
+        $this->response = new WalletResponse;
+        $this->walletRepository = app(WalletRepositoryInterface::class);
 
         $wallet = $this->walletRepository->updateOrFail($id, $data);
         if (!$wallet instanceof Wallet) {
@@ -82,6 +89,9 @@ class WalletService
 
     public function delete(string $id): WalletResponse
     {
+        $this->response = new WalletResponse;
+        $this->walletRepository = app(WalletRepositoryInterface::class);
+
         if (!$this->walletRepository->deleteOrFail($id)) {
             $this->response->error = true;
             $this->response->code = Response::HTTP_NOT_FOUND;
@@ -99,6 +109,8 @@ class WalletService
 
     private function addAmountInBalance(Wallet $wallet, float $ammount) : bool
     {
+        $this->walletRepository = app(WalletRepositoryInterface::class);
+
         $newValue = $wallet->balance + $ammount;
         $updateData = [
             'balance' => $newValue
@@ -112,8 +124,10 @@ class WalletService
         return false;
     }
 
-    public function updateBalance(Transaction $transaction)
+    public function updateBalance(Transaction $transaction) : bool
     {
+        $this->userService = new UserService;
+
         if($transaction->type == 'deposit')
         {
             $userResponse = $this->userService->findById($transaction->to);

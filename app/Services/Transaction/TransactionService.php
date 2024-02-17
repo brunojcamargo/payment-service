@@ -8,19 +8,17 @@ use App\Repositories\Transaction\TransactionRepositoryInterface;
 use App\Services\External\PaymentValidationService;
 use App\Services\Transaction\Responses\TransactionResponse;
 use App\Services\Wallet\WalletService;
-use Illuminate\Support\Facades\Log;
 
 class TransactionService
 {
-    public function __construct(
-        protected TransactionResponse $response,
-        protected TransactionRepositoryInterface $transactionRepository,
-        protected WalletService $walletService
-    ) {
-    }
+    protected TransactionResponse $response;
+    protected TransactionRepositoryInterface $transactionRepository;
+    protected WalletService $walletService;
 
-    public function createDepositTransaction(string $to, float $value) : ? Transaction
+    public function createDepositTransaction(string $to, float $value): ?Transaction
     {
+        $this->transactionRepository = app(TransactionRepositoryInterface::class);
+
         $transactionData = [
             'from' => $to,
             'to' => $to,
@@ -30,20 +28,22 @@ class TransactionService
         ];
 
         $transaction = $this->transactionRepository->createOrFail($transactionData);
-        if($transaction instanceof Transaction){
+        if ($transaction instanceof Transaction) {
             return $transaction;
         }
         return null;
     }
 
-    public function validTransaction(string $paymentValidResponse, Transaction $transaction) : bool
+    public function validTransaction(string $paymentValidResponse, Transaction $transaction): bool
     {
-        if($paymentValidResponse != 'Autorizado'){
+        $this->walletService = new WalletService;
+
+        if ($paymentValidResponse != 'Autorizado') {
             return $this->updateStatusTransaction('refused', $transaction);
         }
 
-        if($this->updateStatusTransaction('accepted', $transaction)){
-            if($this->walletService->updateBalance($transaction)){
+        if ($this->updateStatusTransaction('accepted', $transaction)) {
+            if ($this->walletService->updateBalance($transaction)) {
                 return true;
             }
         }
@@ -51,15 +51,17 @@ class TransactionService
         return $this->updateStatusTransaction('canceled', $transaction);
     }
 
-    private function updateStatusTransaction(string $newStatus, Transaction $transaction) : bool
+    private function updateStatusTransaction(string $newStatus, Transaction $transaction): bool
     {
+        $this->transactionRepository = app(TransactionRepositoryInterface::class);
+
         $transactionData = [
             'status' => $newStatus
         ];
 
         $response = $this->transactionRepository->updateOrFail($transaction->id, $transactionData);
 
-        if($response instanceof Transaction){
+        if ($response instanceof Transaction) {
             return true;
         }
 
