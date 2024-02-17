@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\DepositController;
+use App\Http\Controllers\Api\TransactionController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Route;
@@ -17,3 +18,4 @@ Route::patch('/user/{id}', [UserController::class, 'update']);
 Route::delete('/user/{id}', [UserController::class, 'destroy']);
 
 Route::post('/deposit', [DepositController::class, 'new']);
+Route::post('/transfer', [TransactionController::class, 'transfer']);

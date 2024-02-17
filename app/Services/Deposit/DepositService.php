@@ -12,21 +12,21 @@ use Illuminate\Validation\Rule;
 
 class DepositService
 {
-    public function __construct(
-        protected DepositResponse $response,
-        protected TransactionService $transactionService
-    ) {
-    }
+    protected DepositResponse $response;
+    protected TransactionService $transactionService;
 
     public function deposit(array $data): DepositResponse
     {
+        $this->response = new DepositResponse;
+        $this->transactionService = new TransactionService;
+
         if(!$this->validateDepositData($data)){
             return $this->response;
         }
 
         $transaction = $this->transactionService->createDepositTransaction($data['to'], $data['value']);
 
-        if(!$transaction instanceof Transaction)
+        if(!TransactionService::isValidTransaction($transaction))
         {
             $this->response->error = true;
             $this->response->code = Response::HTTP_INTERNAL_SERVER_ERROR;
@@ -59,7 +59,7 @@ class DepositService
         if ($validator->fails()) {
             $this->response->error = true;
             $this->response->code = Response::HTTP_BAD_REQUEST;
-            $this->response->data = collect($validator->errors()->toArray());
+            $this->response->message = 'Um ou mais campos possuem valores inválidos.';
             return false;
         }
 

@@ -11,6 +11,7 @@ use App\Services\User\Responses\UserResponse;
 use App\Services\User\UserService;
 use App\Services\Wallet\Responses\WalletResponse;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 
 class WalletService
 {
@@ -24,7 +25,7 @@ class WalletService
         $this->walletRepository =  app(WalletRepositoryInterface::class);
 
         $newWallet = $this->walletRepository->createOrFail($data);
-        if (!$newWallet instanceof Wallet) {
+        if (!$this->isValidWallet($newWallet)) {
             $this->response->error = true;
             $this->response->code = Response::HTTP_BAD_REQUEST;
             return $this->response;
@@ -42,7 +43,7 @@ class WalletService
         $this->walletRepository = app(WalletRepositoryInterface::class);
 
         $wallet = $this->walletRepository->findOrFail($id);
-        if (!$wallet instanceof Wallet) {
+        if (!$this->isValidWallet($wallet)) {
             $this->response->error = true;
             $this->response->code = Response::HTTP_NOT_FOUND;
             return $this->response;
@@ -76,7 +77,7 @@ class WalletService
         $this->walletRepository = app(WalletRepositoryInterface::class);
 
         $wallet = $this->walletRepository->updateOrFail($id, $data);
-        if (!$wallet instanceof Wallet) {
+        if (!$this->isValidWallet($wallet)) {
             $this->response->error = true;
             $this->response->code = Response::HTTP_NOT_FOUND;
             return $this->response;
@@ -107,7 +108,7 @@ class WalletService
         dispatch(new CreateWalletJob($user, app(WalletService::class)));
     }
 
-    private function addAmountInBalance(Wallet $wallet, float $ammount) : bool
+    private function addAmountInBalance(Wallet $wallet, float $ammount): bool
     {
         $this->walletRepository = app(WalletRepositoryInterface::class);
 
@@ -117,32 +118,122 @@ class WalletService
         ];
 
         $update = $this->walletRepository->updateOrFail($wallet->id, $updateData);
-        if($update instanceof Wallet){
+        if ($this->isValidWallet($update)) {
             return true;
         }
 
         return false;
     }
 
-    public function updateBalance(Transaction $transaction) : bool
+    private function removeAmountInBalance(Wallet $wallet, float $ammount): bool
     {
-        $this->userService = new UserService;
+        $this->walletRepository = app(WalletRepositoryInterface::class);
 
-        if($transaction->type == 'deposit')
-        {
-            $userResponse = $this->userService->findById($transaction->to);
-            if($userResponse instanceof UserResponse){
-                if($userResponse->error){
-                    return false;
-                }
-                $wallet = $userResponse->data->first()->wallet()->first();
-                if($wallet instanceof Wallet){
-                    return $this->addAmountInBalance($wallet, $transaction->value);
-                }
-            }
+        $newValue = $wallet->balance - $ammount;
+        $updateData = [
+            'balance' => $newValue
+        ];
 
+        $update = $this->walletRepository->updateOrFail($wallet->id, $updateData);
+        if ($this->isValidWallet($update)) {
+            return true;
         }
 
         return false;
+    }
+
+    public function updateBalance(Transaction $transaction): bool
+    {
+        $this->userService = new UserService;
+
+        if ($transaction->type == 'deposit') {
+            return $this->updateBalanceForDeposit($transaction);
+        } elseif ($transaction->type == 'transfer') {
+            return $this->updateBalanceForTransfer($transaction);
+        }
+
+        return false;
+    }
+
+    private function updateBalanceForDeposit(Transaction $transaction): bool
+    {
+        $userResponse = $this->userService->findById($transaction->to);
+        if (!$this->isValidUserResponse($userResponse)) {
+            return false;
+        }
+
+        $wallet = $userResponse->data->first()->wallet()->first();
+        if (!$this->isValidWallet($wallet)) {
+            return false;
+        }
+
+        return $this->addAmountInBalance($wallet, $transaction->value);
+    }
+
+    private function updateBalanceForTransfer(Transaction $transaction): bool
+    {
+        $userResponseTo = $this->userService->findById($transaction->to);
+        $userResponseFrom = $this->userService->findById($transaction->from);
+
+        if (!$this->isValidUserResponse($userResponseTo) || !$this->isValidUserResponse($userResponseFrom)) {
+            return false;
+        }
+
+        $walletTo = $userResponseTo->data->first()->wallet()->first();
+        $walletFrom = $userResponseFrom->data->first()->wallet()->first();
+
+        if (!$this->isValidWallet($walletTo) || !$this->isValidWallet($walletFrom)) {
+            return false;
+        }
+
+        DB::beginTransaction();
+        if ($this->addAmountInBalance($walletTo, $transaction->value)) {
+            if (!$this->removeAmountInBalance($walletFrom, $transaction->value)) {
+                DB::rollBack();
+                return false;
+            }
+            DB::commit();
+            return true;
+        }
+        DB::rollBack();
+        return false;
+    }
+
+    private function isValidUserResponse(?UserResponse $userResponse): bool
+    {
+        return $userResponse instanceof UserResponse && !$userResponse->error;
+    }
+
+    private function isValidWallet(?Wallet $wallet): bool
+    {
+        return $wallet instanceof Wallet;
+    }
+
+    public function hasAmountAvailable(string $userId, float $amount): bool
+    {
+        $this->userService = new UserService;
+
+        $userResponse = $this->userService->findById($userId);
+        if ($this->isValidUserResponse($userResponse)) {
+            $wallet = $userResponse->data->first()->wallet()->first();
+            if ($this->isValidWallet($wallet)) {
+                return $this->hasAmountInBalance($wallet, $amount, $userResponse->data->first());
+            }
+        }
+
+        return false;
+    }
+
+    private function hasAmountInBalance(Wallet $wallet, float $amount, User $user): bool
+    {
+        $balance = $wallet->balance ?? 0;
+        $pendingTransactionsValue = $user->transactionsFrom()
+            ->where('status', 'pending')
+            ->where('type', 'transfer')
+            ->sum('value');
+
+        $availableBalance = $balance - $pendingTransactionsValue;
+        $isBalanceSufficient = $availableBalance >= $amount;
+        return $isBalanceSufficient;
     }
 }

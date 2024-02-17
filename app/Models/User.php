@@ -32,4 +32,9 @@ class User extends Model
     {
         return $this->hasOne(Wallet::class);
     }
+
+    public function transactionsFrom()
+    {
+        return $this->hasMany(Transaction::class,'from','id');
+    }
 }
