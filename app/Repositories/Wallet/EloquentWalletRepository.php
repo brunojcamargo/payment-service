@@ -13,8 +13,8 @@ class EloquentWalletRepository implements WalletRepositoryInterface
     public function findOrFail($id): ?Wallet
     {
         try {
-            $user = Wallet::findOrFail($id);
-            return $user;
+            $wallet = Wallet::findOrFail($id);
+            return $wallet;
         } catch (ModelNotFoundException $e) {
             $this->log(false, __FUNCTION__, $e->getMessage());
         } catch (QueryException $e) {
@@ -31,9 +31,9 @@ class EloquentWalletRepository implements WalletRepositoryInterface
     public function createOrFail(array $data): ?Wallet
     {
         try {
-            $user = Wallet::create($data);
+            $wallet = Wallet::create($data);
 
-            return $user;
+            return $wallet;
         } catch (\Exception $e) {
             $this->log(false, __FUNCTION__, $e->getMessage());
             return null;
@@ -43,9 +43,9 @@ class EloquentWalletRepository implements WalletRepositoryInterface
     public function updateOrFail($id, array $data): ?Wallet
     {
         try {
-            $user = Wallet::findOrFail($id);
-            $user->update($data);
-            return $user;
+            $wallet = Wallet::findOrFail($id);
+            $wallet->update($data);
+            return $wallet;
         } catch (ModelNotFoundException $e) {
             $this->log(false, __FUNCTION__, $e->getMessage());
         } catch (QueryException $e) {
@@ -57,8 +57,8 @@ class EloquentWalletRepository implements WalletRepositoryInterface
     public function deleteOrFail($id): bool
     {
         try {
-            $user = Wallet::findOrFail($id);
-            $user->delete();
+            $wallet = Wallet::findOrFail($id);
+            $wallet->delete();
             return true;
         } catch (ModelNotFoundException $e) {
             $this->log(false, __FUNCTION__, $e->getMessage());
