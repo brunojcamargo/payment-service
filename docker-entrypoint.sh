@@ -5,7 +5,7 @@ set -a
 set +a
 
 if [ ! -d "vendor" ]; then
-    composer install --no-dev --optimize-autoloader
+    composer install --optimize-autoloader
     php artisan key:generate
 fi
 
