@@ -1,12 +1,18 @@
 #!/bin/bash
 
-if [ -d "vendor" ]; then
-    rm -rf vendor
+set -a
+. /var/www/html/.env
+set +a
+
+if [ ! -d "vendor" ]; then
+    composer install --no-dev --optimize-autoloader
+    php artisan key:generate
 fi
 
-composer install --no-dev --optimize-autoloader
+php artisan cache:clear
+php artisan config:cache
 
-php artisan key:generate
+sleep 5
 
 php artisan migrate --force
 

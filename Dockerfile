@@ -1,4 +1,4 @@
- FROM php:8.3-fpm
+FROM php:8.3-fpm
 
 RUN apt-get update && apt-get install -y \
     git \
@@ -8,10 +8,13 @@ RUN apt-get update && apt-get install -y \
     libpng-dev \
     libfreetype6-dev \
     libzip-dev \
+    supervisor \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) gd pdo pdo_pgsql pdo_mysql zip
 
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 WORKDIR /var/www/html
 
@@ -27,4 +30,5 @@ COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 ENTRYPOINT ["docker-entrypoint.sh"]
 
-CMD ["php-fpm"]
+# Inicia o Supervisor
+CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
