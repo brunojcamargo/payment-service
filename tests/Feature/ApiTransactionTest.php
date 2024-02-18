@@ -64,4 +64,20 @@ class ApiTransactionTest extends TestCase
             ]
         ]);
     }
+
+    public function test_api_cancel_transaction_valid_inputs_required(): void
+    {
+        $response = $this->json('DELETE', '/api/transfer');
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+
+        $response->assertJson([
+            'error' => true,
+            'code' => 422,
+            'data' => [
+                'transactionId' => ["O campo transactionId é obrigatório."],
+                'from' => ["O campo from é obrigatório."]
+            ]
+        ]);
+    }
 }
