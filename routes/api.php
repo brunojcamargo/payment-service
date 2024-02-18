@@ -19,3 +19,4 @@ Route::delete('/user/{userId}', [UserController::class, 'destroy']);
 
 Route::post('/deposit', [DepositController::class, 'new']);
 Route::post('/transfer', [TransactionController::class, 'transfer']);
+Route::get('/transfers', [TransactionController::class, 'getTransactions']);

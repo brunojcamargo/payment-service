@@ -3,6 +3,7 @@
 namespace App\Services\Transaction\Responses;
 
 use Illuminate\Http\Response;
+use Illuminate\Support\Collection;
 
 class TransactionResponse
 {
@@ -11,6 +12,7 @@ class TransactionResponse
     public string $message;
     public string $transactionId = '';
     public string $transactionStatus = '';
+    public Collection $data;
 
     public function __construct() {
         $this->error = false;

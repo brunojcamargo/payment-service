@@ -170,4 +170,34 @@ class TransactionService
     {
         return $transaction instanceof Transaction;
     }
+
+    public function getTransactions(string $userId) : TransactionResponse
+    {
+        $this->response = new TransactionResponse;
+
+        $this->userService = new UserService;
+
+        $userResponse = $this->userService->findById($userId);
+
+        if($userResponse->error){
+            $this->response->error = true;
+            $this->response->code = Response::HTTP_NOT_FOUND;
+            $this->response->message = 'usuário não encontrado.';
+            return $this->response;
+        }
+
+        $user = $userResponse->data->first();
+
+        $transactions = collect($user->transactionsFrom()->orderBy('created_at', 'desc')->get()->values());
+
+        if($transactions->isEmpty()){
+            $this->response->error = true;
+            $this->response->code = Response::HTTP_NO_CONTENT;
+            return $this->response;
+        }
+
+        $this->response->data = $transactions;
+
+        return $this->response;
+    }
 }
