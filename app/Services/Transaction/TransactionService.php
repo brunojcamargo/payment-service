@@ -128,11 +128,10 @@ class TransactionService
     private function validateTransactionData($data) : bool
     {
         $request = new TransactionRequest(app(Rule::class));
-        $validatorClass = app(Validator::class);
         $rules = $request->rules();
         $customMessages = $request->messages();
 
-        $validator = $validatorClass->make(
+        $validator = Validator::make(
             $data,
             $rules,
             $customMessages

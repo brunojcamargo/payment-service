@@ -48,11 +48,10 @@ class DepositService
     private function validateDepositData(array $data): bool
     {
         $request = new DepositRequest(app(Rule::class));
-        $this->validator = app(Validator::class);
         $rules = $request->rules();
         $customMessages = $request->messages();
 
-        $validator = $this->validator->make(
+        $validator = Validator::make(
             $data,
             $rules,
             $customMessages
