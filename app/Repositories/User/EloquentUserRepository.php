@@ -36,6 +36,11 @@ class EloquentUserRepository implements UserRepositoryInterface
         return $this->model->all();
     }
 
+    public function getAllWithWallet(): Collection
+    {
+        return $this->model->with('wallet')->get();
+    }
+
     public function createOrFail(array $data): ?User
     {
         try {

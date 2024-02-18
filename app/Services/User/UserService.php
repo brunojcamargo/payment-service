@@ -54,7 +54,7 @@ class UserService
         $this->userRepository = app(UserRepositoryInterface::class);
         $this->response = new UserResponse;
 
-        $allUsers = $this->userRepository->getAll();
+        $allUsers = $this->userRepository->getAllWithWallet();
 
         if ($allUsers->isEmpty()) {
             $this->response->code = Response::HTTP_NO_CONTENT;

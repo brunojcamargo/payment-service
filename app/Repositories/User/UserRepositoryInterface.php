@@ -11,6 +11,8 @@ interface UserRepositoryInterface
 
     public function getAll() : Collection;
 
+    public function getAllWithWallet() : Collection;
+
     public function createOrFail(array $data) : ?User;
 
     public function updateOrFail($userId, array $data) : ?User;
