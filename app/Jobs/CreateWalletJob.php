@@ -19,7 +19,6 @@ class CreateWalletJob implements ShouldQueue
     protected WalletService $walletService;
     public $tries = 3;
     public $retryAfter = 60;
-    protected $logService;
 
     /**
      * Create a new job instance.
@@ -28,7 +27,6 @@ class CreateWalletJob implements ShouldQueue
     {
         $this->user = $user;
         $this->walletService = $walletService;
-        $this->logService = app(Logger::class);
     }
 
     /**
@@ -36,10 +34,6 @@ class CreateWalletJob implements ShouldQueue
      */
     public function handle(): void
     {
-        try {
-            $this->walletService->create(['user_id' => $this->user->id]);
-        } catch (\Exception $e) {
-            $this->logService->error('Falha ao processar o job CreateWalletJob: ' . $e->getMessage());
-        }
+        $this->walletService->create(['user_id' => $this->user->id]);
     }
 }
