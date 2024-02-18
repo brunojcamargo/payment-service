@@ -6,7 +6,7 @@ use App\Models\Transaction;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Log\Logger;
 
 class EloquentTransactionRepository implements TransactionRepositoryInterface
 {
@@ -14,7 +14,7 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
     protected Transaction $model;
 
     public function __construct() {
-        $this->logService = app(Log::class);
+        $this->logService = app(Logger::class);
         $this->model = app(Transaction::class);
     }
 

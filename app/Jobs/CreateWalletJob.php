@@ -7,9 +7,9 @@ use App\Services\Wallet\WalletService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Log\Logger;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
 
 class CreateWalletJob implements ShouldQueue
 {
@@ -28,7 +28,7 @@ class CreateWalletJob implements ShouldQueue
     {
         $this->user = $user;
         $this->walletService = $walletService;
-        $this->logService = app(Log::class);
+        $this->logService = app(Logger::class);
     }
 
     /**

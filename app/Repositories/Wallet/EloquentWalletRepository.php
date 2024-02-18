@@ -6,7 +6,7 @@ use App\Models\Wallet;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Log\Logger;
 
 class EloquentWalletRepository implements WalletRepositoryInterface
 {
@@ -14,7 +14,7 @@ class EloquentWalletRepository implements WalletRepositoryInterface
     protected Wallet $model;
 
     public function __construct() {
-        $this->logService = app(Log::class);
+        $this->logService = app(Logger::class);
         $this->model = app(Wallet::class);
     }
 

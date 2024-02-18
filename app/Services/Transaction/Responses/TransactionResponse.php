@@ -3,7 +3,6 @@
 namespace App\Services\Transaction\Responses;
 
 use Illuminate\Http\Response;
-use Illuminate\Support\Collection;
 
 class TransactionResponse
 {
