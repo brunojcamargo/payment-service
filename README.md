@@ -7,7 +7,7 @@ Este projeto simula um serviço de transações financeiras entre usuários e lo
 - [Sobre](#sobre)
 - [Instalação](#instalação)
 - [Como Usar](#como-usar)
-- [Testes](#teste)
+- [Testes](#testes)
 - [Funcionamento](#funcionamento)
 
 ## Sobre
