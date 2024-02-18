@@ -10,10 +10,18 @@ use Illuminate\Support\Facades\Log;
 
 class EloquentUserRepository implements UserRepositoryInterface
 {
-    public function findOrFail($id): ?User
+    protected $logService;
+    protected User $model;
+
+    public function __construct() {
+        $this->logService = app(Log::class);
+        $this->model = app(User::class);
+    }
+
+    public function findOrFail($userId): ?User
     {
         try {
-            $user = User::findOrFail($id);
+            $user = $this->model->findOrFail($userId);
             return $user;
         } catch (ModelNotFoundException $e) {
             $this->log(false, __FUNCTION__, $e->getMessage());
@@ -25,14 +33,14 @@ class EloquentUserRepository implements UserRepositoryInterface
 
     public function getAll(): Collection
     {
-        return User::all();
+        return $this->model->all();
     }
 
     public function createOrFail(array $data): ?User
     {
         try {
             $data['password'] = bcrypt($data['password']);
-            $user = User::create($data);
+            $user = $this->model->create($data);
 
             return $user;
         } catch (\Exception $e) {
@@ -41,10 +49,10 @@ class EloquentUserRepository implements UserRepositoryInterface
         }
     }
 
-    public function updateOrFail($id, array $data): ?User
+    public function updateOrFail($userId, array $data): ?User
     {
         try {
-            $user = User::findOrFail($id);
+            $user = $this->model->findOrFail($userId);
             $user->update($data);
             return $user;
         } catch (ModelNotFoundException $e) {
@@ -55,10 +63,10 @@ class EloquentUserRepository implements UserRepositoryInterface
         return null;
     }
 
-    public function deleteOrFail($id): bool
+    public function deleteOrFail($userId): bool
     {
         try {
-            $user = User::findOrFail($id);
+            $user = $this->model->findOrFail($userId);
             $user->delete();
             return true;
         } catch (ModelNotFoundException $e) {
@@ -73,10 +81,10 @@ class EloquentUserRepository implements UserRepositoryInterface
     private function log(bool $databaseError, string $method, string $message): void
     {
         if ($databaseError) {
-            Log::error(get_class($this) . '::' . $method . ' Database error: ' . $message);
+            $this->logService->error(get_class($this) . '::' . $method . ' Database error: ' . $message);
             return;
         }
-        Log::error(get_class($this) . '::' . $method . ' Error: ' . $message);
+        $this->logService->error(get_class($this) . '::' . $method . ' Error: ' . $message);
         return;
     }
 }

@@ -2,11 +2,9 @@
 
 namespace App\Services\Transaction;
 
-use App\Jobs\NotificationJob;
 use App\Jobs\PaymentValidationJob;
 use App\Models\Transaction;
 use App\Repositories\Transaction\TransactionRepositoryInterface;
-use App\Services\External\NotificationService;
 use App\Services\External\PaymentValidationService;
 use App\Services\Transaction\Requests\TransactionRequest;
 use App\Services\Transaction\Responses\TransactionResponse;
@@ -14,28 +12,29 @@ use App\Services\User\UserService;
 use App\Services\Wallet\WalletService;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class TransactionService
 {
     protected TransactionResponse $response;
-    protected TransactionRepositoryInterface $transactionRepository;
+    protected TransactionRepositoryInterface $transactionRepo;
     protected WalletService $walletService;
     protected UserService $userService;
 
-    public function createDepositTransaction(string $to, float $value): ?Transaction
+    public function createDepositTransaction(string $toUserId, float $value): ?Transaction
     {
-        $this->transactionRepository = app(TransactionRepositoryInterface::class);
+        $this->transactionRepo = app(TransactionRepositoryInterface::class);
 
         $transactionData = [
-            'from' => $to,
-            'to' => $to,
+            'from' => $toUserId,
+            'to' => $toUserId,
             'value' => $value,
             'type' => 'deposit',
             'status' => 'pending'
         ];
 
-        $transaction = $this->transactionRepository->createOrFail($transactionData);
-        if (self::isValidTransaction($transaction)) {
+        $transaction = $this->transactionRepo->createOrFail($transactionData);
+        if ($this->isValidTransaction($transaction)) {
             return $transaction;
         }
         return null;
@@ -60,15 +59,15 @@ class TransactionService
 
     private function updateStatusTransaction(string $newStatus, Transaction $transaction): bool
     {
-        $this->transactionRepository = app(TransactionRepositoryInterface::class);
+        $this->transactionRepo = app(TransactionRepositoryInterface::class);
 
         $transactionData = [
             'status' => $newStatus
         ];
 
-        $response = $this->transactionRepository->updateOrFail($transaction->id, $transactionData);
+        $response = $this->transactionRepo->updateOrFail($transaction->id, $transactionData);
 
-        if (self::isValidTransaction($response)) {
+        if ($this->isValidTransaction($response)) {
             return true;
         }
 
@@ -78,11 +77,6 @@ class TransactionService
     public function dispatchJobValidPayment(Transaction $transaction)
     {
         dispatch(new PaymentValidationJob($transaction, app(TransactionService::class), app(PaymentValidationService::class)));
-    }
-
-    public function dispatchJobNotification()
-    {
-        dispatch(new NotificationJob(app(NotificationService::class)));
     }
 
     public function newTransaction(array $data) : TransactionResponse
@@ -113,7 +107,7 @@ class TransactionService
 
         $newTransaction = $this->createTransferTransaction($data['to'], $data['from'], $data['value']);
 
-        if(!self::isValidTransaction($newTransaction))
+        if(!$this->isValidTransaction($newTransaction))
         {
             $this->response->error = true;
             $this->response->code = Response::HTTP_INTERNAL_SERVER_ERROR;
@@ -133,11 +127,12 @@ class TransactionService
 
     private function validateTransactionData($data) : bool
     {
-        $request = new TransactionRequest();
+        $request = new TransactionRequest(app(Rule::class));
+        $validatorClass = app(Validator::class);
         $rules = $request->rules();
         $customMessages = $request->messages();
 
-        $validator = Validator::make(
+        $validator = $validatorClass->make(
             $data,
             $rules,
             $customMessages
@@ -153,26 +148,26 @@ class TransactionService
         return true;
     }
 
-    public function createTransferTransaction(string $to, string $from, float $value): ?Transaction
+    public function createTransferTransaction(string $toUserId, string $fromUserId, float $value): ?Transaction
     {
-        $this->transactionRepository = app(TransactionRepositoryInterface::class);
+        $this->transactionRepo = app(TransactionRepositoryInterface::class);
 
         $transactionData = [
-            'from' => $from,
-            'to' => $to,
+            'from' => $fromUserId,
+            'to' => $toUserId,
             'value' => $value,
             'type' => 'transfer',
             'status' => 'pending'
         ];
 
-        $transaction = $this->transactionRepository->createOrFail($transactionData);
-        if (self::isValidTransaction($transaction)) {
+        $transaction = $this->transactionRepo->createOrFail($transactionData);
+        if ($this->isValidTransaction($transaction)) {
             return $transaction;
         }
         return null;
     }
 
-    public static function isValidTransaction(?Transaction $transaction) : bool
+    public function isValidTransaction(?Transaction $transaction) : bool
     {
         return $transaction instanceof Transaction;
     }

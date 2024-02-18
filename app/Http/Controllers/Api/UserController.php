@@ -29,9 +29,9 @@ class UserController extends Controller
     }
 
 
-    public function get(string $id)
+    public function get(string $userId)
     {
-        $response = $this->userService->findById($id);
+        $response = $this->userService->findById($userId);
 
         return response()->json($response, $response->code);
     }
@@ -43,16 +43,16 @@ class UserController extends Controller
         return response()->json($response, $response->code);
     }
 
-    public function update(UpdateUserRequest $request, string $id)
+    public function update(UpdateUserRequest $request, string $userId)
     {
-        $response = $this->userService->update($id, $request->all());
+        $response = $this->userService->update($userId, $request->all());
 
         return response()->json($response, $response->code);
     }
 
-    public function destroy(string $id)
+    public function destroy(string $userId)
     {
-        $response = $this->userService->delete($id);
+        $response = $this->userService->delete($userId);
 
         return response()->json($response, $response->code);
     }

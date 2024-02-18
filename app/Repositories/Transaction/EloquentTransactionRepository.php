@@ -10,10 +10,18 @@ use Illuminate\Support\Facades\Log;
 
 class EloquentTransactionRepository implements TransactionRepositoryInterface
 {
-    public function findOrFail($id): ?Transaction
+    protected $logService;
+    protected Transaction $model;
+
+    public function __construct() {
+        $this->logService = app(Log::class);
+        $this->model = app(Transaction::class);
+    }
+
+    public function findOrFail($transactionId): ?Transaction
     {
         try {
-            $transaction = Transaction::findOrFail($id);
+            $transaction = $this->model->findOrFail($transactionId);
             return $transaction;
         } catch (ModelNotFoundException $e) {
             $this->log(false, __FUNCTION__, $e->getMessage());
@@ -25,13 +33,13 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
 
     public function getAll(): Collection
     {
-        return Transaction::all();
+        return $this->model->all();
     }
 
     public function createOrFail(array $data): ?Transaction
     {
         try {
-            $transaction = Transaction::create($data);
+            $transaction = $this->model->create($data);
 
             return $transaction;
         } catch (\Exception $e) {
@@ -40,10 +48,10 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
         }
     }
 
-    public function updateOrFail($id, array $data): ?Transaction
+    public function updateOrFail($transactionId, array $data): ?Transaction
     {
         try {
-            $transaction = Transaction::findOrFail($id);
+            $transaction = $this->model->findOrFail($transactionId);
             $transaction->update($data);
             return $transaction;
         } catch (ModelNotFoundException $e) {
@@ -64,10 +72,10 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
         }
     }
 
-    public function deleteOrFail($id): bool
+    public function deleteOrFail($transactionId): bool
     {
         try {
-            $transaction = Transaction::findOrFail($id);
+            $transaction = $this->model->findOrFail($transactionId);
             $transaction->delete();
             return true;
         } catch (ModelNotFoundException $e) {
@@ -82,10 +90,10 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
     private function log(bool $databaseError, string $method, string $message): void
     {
         if ($databaseError) {
-            Log::error(get_class($this) . '::' . $method . ' Database error: ' . $message);
+            $this->logService->error(get_class($this) . '::' . $method . ' Database error: ' . $message);
             return;
         }
-        Log::error(get_class($this) . '::' . $method . ' Error: ' . $message);
+        $this->logService->error(get_class($this) . '::' . $method . ' Error: ' . $message);
         return;
     }
 }

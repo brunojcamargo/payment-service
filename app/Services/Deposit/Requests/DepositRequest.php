@@ -11,6 +11,14 @@ use Illuminate\Validation\Rule;
 
 class DepositRequest extends FormRequest
 {
+
+    protected $rule;
+
+    public function __construct(Rule $rule)
+    {
+        $this->rule = $rule;
+    }
+
     public function authorize(): bool
     {
         return true;
@@ -24,7 +32,7 @@ class DepositRequest extends FormRequest
     public function rules(): array
     {
         return [
-            "to" => ['required', 'string', Rule::exists('users', 'id')],
+            "to" => ['required', 'string', $this->rule->exists('users', 'id')],
             "value" => ['required', 'numeric', 'min:0.01']
         ];
     }

@@ -11,6 +11,13 @@ use Illuminate\Validation\Rule;
 
 class TransactionRequest extends FormRequest
 {
+    protected $rule;
+
+    public function __construct(Rule $rule)
+    {
+        $this->rule = $rule;
+    }
+
     public function authorize(): bool
     {
         return true;
@@ -24,8 +31,8 @@ class TransactionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            "from" => ['required', 'string', Rule::exists('users', 'id')],
-            "to" => ['required', 'string', Rule::exists('users', 'id')],
+            "from" => ['required', 'string', $this->rule->exists('users', 'id')],
+            "to" => ['required', 'string', $this->rule->exists('users', 'id')],
             "value" => ['required', 'numeric', 'min:0.01']
         ];
     }

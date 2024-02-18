@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Services\External\NotificationService;
+use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -31,7 +32,7 @@ class NotificationJob implements ShouldQueue
     public function handle(): void
     {
         if(!$this->notificationService->sendNotification()){
-            throw new \Exception('Erro ao notificar');
+            throw new Exception('Erro ao notificar');
         }
     }
 

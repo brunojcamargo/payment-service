@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\Transaction;
 use App\Services\External\PaymentValidationService;
 use App\Services\Transaction\TransactionService;
+use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -17,19 +18,19 @@ class PaymentValidationJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected Transaction $transaction;
-    protected TransactionService $transactionService;
-    protected PaymentValidationService $paymentValidationService;
+    protected TransactionService $transactionServ;
+    protected PaymentValidationService $paymentValidServ;
     public $tries = 3;
     public $retryAfter = 60;
 
     /**
      * Create a new job instance.
      */
-    public function __construct(Transaction $transaction, TransactionService $transactionService, PaymentValidationService $paymentValidationService)
+    public function __construct(Transaction $transaction, TransactionService $transactionServ, PaymentValidationService $paymentValidServ)
     {
         $this->transaction = $transaction;
-        $this->transactionService = $transactionService;
-        $this->paymentValidationService = $paymentValidationService;
+        $this->transactionServ = $transactionServ;
+        $this->paymentValidServ = $paymentValidServ;
     }
 
     /**
@@ -37,15 +38,15 @@ class PaymentValidationJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $response = $this->paymentValidationService->validatePayment();
+        $response = $this->paymentValidServ->validatePayment();
         if($response == 'Erro'){
-            throw new \Exception('Erro de conexão');
+            throw new Exception('Erro de conexão');
         }
 
-        $updateTransaction = $this->transactionService->validTransaction($response, $this->transaction);
+        $updateTransaction = $this->transactionServ->validTransaction($response, $this->transaction);
 
         if(!$updateTransaction){
-            throw new \Exception('Erro de atualização');
+            throw new Exception('Erro de atualização');
         }
     }
 

@@ -11,8 +11,8 @@ use App\Services\Transaction\TransactionService;
 use App\Services\User\Responses\UserResponse;
 use App\Services\User\UserService;
 use App\Services\Wallet\Responses\WalletResponse;
+use Illuminate\Database\DatabaseManager;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\DB;
 
 class WalletService
 {
@@ -20,6 +20,7 @@ class WalletService
     protected WalletResponse $response;
     protected UserService $userService;
     protected TransactionService $transactionService;
+    protected DatabaseManager $database;
 
     public function create(array $data): WalletResponse
     {
@@ -39,12 +40,12 @@ class WalletService
         return $this->response;
     }
 
-    public function findById(string $id): WalletResponse
+    public function findById(string $walletId): WalletResponse
     {
         $this->response = new WalletResponse;
         $this->walletRepository = app(WalletRepositoryInterface::class);
 
-        $wallet = $this->walletRepository->findOrFail($id);
+        $wallet = $this->walletRepository->findOrFail($walletId);
         if (!$this->isValidWallet($wallet)) {
             $this->response->error = true;
             $this->response->code = Response::HTTP_NOT_FOUND;
@@ -73,12 +74,12 @@ class WalletService
         return $this->response;
     }
 
-    public function update(string $id, array $data): WalletResponse
+    public function update(string $walletId, array $data): WalletResponse
     {
         $this->response = new WalletResponse;
         $this->walletRepository = app(WalletRepositoryInterface::class);
 
-        $wallet = $this->walletRepository->updateOrFail($id, $data);
+        $wallet = $this->walletRepository->updateOrFail($walletId, $data);
         if (!$this->isValidWallet($wallet)) {
             $this->response->error = true;
             $this->response->code = Response::HTTP_NOT_FOUND;
@@ -90,12 +91,12 @@ class WalletService
         return $this->response;
     }
 
-    public function delete(string $id): WalletResponse
+    public function delete(string $walletId): WalletResponse
     {
         $this->response = new WalletResponse;
         $this->walletRepository = app(WalletRepositoryInterface::class);
 
-        if (!$this->walletRepository->deleteOrFail($id)) {
+        if (!$this->walletRepository->deleteOrFail($walletId)) {
             $this->response->error = true;
             $this->response->code = Response::HTTP_NOT_FOUND;
             return $this->response;
@@ -188,18 +189,19 @@ class WalletService
             return false;
         }
 
-        DB::beginTransaction();
+        $this->database = app(DatabaseManager::class);
+
+        $this->database->beginTransaction();
         if ($this->addAmountInBalance($walletTo, $transaction->value)) {
             if (!$this->removeAmountInBalance($walletFrom, $transaction->value)) {
-                DB::rollBack();
+                $this->database->rollBack();
                 return false;
             }
-            DB::commit();
-            $this->transactionService = new TransactionService;
-            $this->transactionService->dispatchJobNotification();
+            $this->database->commit();
+            $this->userService->dispatchJobNotification();
             return true;
         }
-        DB::rollBack();
+        $this->database->rollBack();
         return false;
     }
 
@@ -231,12 +233,12 @@ class WalletService
     private function hasAmountInBalance(Wallet $wallet, float $amount, User $user): bool
     {
         $balance = $wallet->balance ?? 0;
-        $pendingTransactionsValue = $user->transactionsFrom()
+        $pendingValue = $user->transactionsFrom()
             ->where('status', 'pending')
             ->where('type', 'transfer')
             ->sum('value');
 
-        $availableBalance = $balance - $pendingTransactionsValue;
+        $availableBalance = $balance - $pendingValue;
         $isBalanceSufficient = $availableBalance >= $amount;
         return $isBalanceSufficient;
     }

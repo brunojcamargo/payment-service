@@ -14,6 +14,7 @@ class DepositService
 {
     protected DepositResponse $response;
     protected TransactionService $transactionService;
+    protected Validator $validator;
 
     public function deposit(array $data): DepositResponse
     {
@@ -26,7 +27,7 @@ class DepositService
 
         $transaction = $this->transactionService->createDepositTransaction($data['to'], $data['value']);
 
-        if(!TransactionService::isValidTransaction($transaction))
+        if(!$this->transactionService->isValidTransaction($transaction))
         {
             $this->response->error = true;
             $this->response->code = Response::HTTP_INTERNAL_SERVER_ERROR;
@@ -46,11 +47,12 @@ class DepositService
 
     private function validateDepositData(array $data): bool
     {
-        $request = new DepositRequest();
+        $request = new DepositRequest(app(Rule::class));
+        $this->validator = app(Validator::class);
         $rules = $request->rules();
         $customMessages = $request->messages();
 
-        $validator = Validator::make(
+        $validator = $this->validator->make(
             $data,
             $rules,
             $customMessages

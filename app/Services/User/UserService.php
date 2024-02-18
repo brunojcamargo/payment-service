@@ -2,8 +2,10 @@
 
 namespace App\Services\User;
 
+use App\Jobs\NotificationJob;
 use App\Models\User;
 use App\Repositories\User\UserRepositoryInterface;
+use App\Services\External\NotificationService;
 use App\Services\User\Responses\UserResponse;
 use Illuminate\Http\Response;
 
@@ -18,7 +20,7 @@ class UserService
         $this->response = new UserResponse;
 
         $newUser = $this->userRepository->createOrFail($data);
-        if (!self::isValidUser($newUser)) {
+        if (!$this->isValidUser($newUser)) {
             $this->response->error = true;
             $this->response->code = Response::HTTP_BAD_REQUEST;
             return $this->response;
@@ -30,13 +32,13 @@ class UserService
         return $this->response;
     }
 
-    public function findById(string $id): UserResponse
+    public function findById(string $userId): UserResponse
     {
         $this->userRepository = app(UserRepositoryInterface::class);
         $this->response = new UserResponse;
 
-        $user = $this->userRepository->findOrFail($id);
-        if (!self::isValidUser($user)) {
+        $user = $this->userRepository->findOrFail($userId);
+        if (!$this->isValidUser($user)) {
             $this->response->error = true;
             $this->response->code = Response::HTTP_NOT_FOUND;
             return $this->response;
@@ -64,13 +66,13 @@ class UserService
         return $this->response;
     }
 
-    public function update(string $id, array $data): UserResponse
+    public function update(string $userId, array $data): UserResponse
     {
         $this->userRepository = app(UserRepositoryInterface::class);
         $this->response = new UserResponse;
 
-        $user = $this->userRepository->updateOrFail($id, $data);
-        if (!self::isValidUser($user)) {
+        $user = $this->userRepository->updateOrFail($userId, $data);
+        if (!$this->isValidUser($user)) {
             $this->response->error = true;
             $this->response->code = Response::HTTP_NOT_FOUND;
             return $this->response;
@@ -81,12 +83,12 @@ class UserService
         return $this->response;
     }
 
-    public function delete(string $id): UserResponse
+    public function delete(string $userId): UserResponse
     {
         $this->userRepository = app(UserRepositoryInterface::class);
         $this->response = new UserResponse;
 
-        if (!$this->userRepository->deleteOrFail($id)) {
+        if (!$this->userRepository->deleteOrFail($userId)) {
             $this->response->error = true;
             $this->response->code = Response::HTTP_NOT_FOUND;
             return $this->response;
@@ -101,15 +103,20 @@ class UserService
         $this->userRepository = app(UserRepositoryInterface::class);
 
         $user = $this->userRepository->findOrFail($userId);
-        if (!self::isValidUser($user)) {
+        if (!$this->isValidUser($user)) {
             return false;
         }
 
         return $user->type != 'shopkeeper';
     }
 
-    public static function isValidUser(?User $user): bool
+    public function isValidUser(?User $user): bool
     {
         return $user instanceof User;
+    }
+
+    public function dispatchJobNotification()
+    {
+        dispatch(new NotificationJob(app(NotificationService::class)));
     }
 }

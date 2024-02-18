@@ -8,15 +8,15 @@ use Illuminate\Database\Eloquent\Collection;
 
 interface TransactionRepositoryInterface
 {
-    public function findOrFail($id) : ?Transaction;
+    public function findOrFail($transactionId) : ?Transaction;
 
     public function getAll() : Collection;
 
     public function createOrFail(array $data) : ?Transaction;
 
-    public function updateOrFail($id, array $data) : ?Transaction;
+    public function updateOrFail($transactionId, array $data) : ?Transaction;
 
-    public function deleteOrFail($id) : bool;
+    public function deleteOrFail($transactionId) : bool;
 
     public function updateInstance(Transaction $transaction, array $data) : ?Transaction;
 }

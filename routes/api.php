@@ -13,9 +13,9 @@ Route::get('/', function(){
 
 Route::post('/user', [UserController::class, 'store']);
 Route::get('/users', [UserController::class, 'getAll']);
-Route::get('/user/{id}', [UserController::class, 'get']);
-Route::patch('/user/{id}', [UserController::class, 'update']);
-Route::delete('/user/{id}', [UserController::class, 'destroy']);
+Route::get('/user/{userId}', [UserController::class, 'get']);
+Route::patch('/user/{userId}', [UserController::class, 'update']);
+Route::delete('/user/{userId}', [UserController::class, 'destroy']);
 
 Route::post('/deposit', [DepositController::class, 'new']);
 Route::post('/transfer', [TransactionController::class, 'transfer']);

@@ -10,10 +10,18 @@ use Illuminate\Support\Facades\Log;
 
 class EloquentWalletRepository implements WalletRepositoryInterface
 {
-    public function findOrFail($id): ?Wallet
+    protected $logService;
+    protected Wallet $model;
+
+    public function __construct() {
+        $this->logService = app(Log::class);
+        $this->model = app(Wallet::class);
+    }
+
+    public function findOrFail($walletId): ?Wallet
     {
         try {
-            $wallet = Wallet::findOrFail($id);
+            $wallet = $this->model->findOrFail($walletId);
             return $wallet;
         } catch (ModelNotFoundException $e) {
             $this->log(false, __FUNCTION__, $e->getMessage());
@@ -25,13 +33,13 @@ class EloquentWalletRepository implements WalletRepositoryInterface
 
     public function getAll(): Collection
     {
-        return Wallet::all();
+        return $this->model->all();
     }
 
     public function createOrFail(array $data): ?Wallet
     {
         try {
-            $wallet = Wallet::create($data);
+            $wallet = $this->model->create($data);
 
             return $wallet;
         } catch (\Exception $e) {
@@ -40,10 +48,10 @@ class EloquentWalletRepository implements WalletRepositoryInterface
         }
     }
 
-    public function updateOrFail($id, array $data): ?Wallet
+    public function updateOrFail($walletId, array $data): ?Wallet
     {
         try {
-            $wallet = Wallet::findOrFail($id);
+            $wallet = $this->model->findOrFail($walletId);
             $wallet->update($data);
             return $wallet;
         } catch (ModelNotFoundException $e) {
@@ -54,10 +62,10 @@ class EloquentWalletRepository implements WalletRepositoryInterface
         return null;
     }
 
-    public function deleteOrFail($id): bool
+    public function deleteOrFail($walletId): bool
     {
         try {
-            $wallet = Wallet::findOrFail($id);
+            $wallet = $this->model->findOrFail($walletId);
             $wallet->delete();
             return true;
         } catch (ModelNotFoundException $e) {
@@ -72,10 +80,10 @@ class EloquentWalletRepository implements WalletRepositoryInterface
     private function log(bool $databaseError, string $method, string $message): void
     {
         if ($databaseError) {
-            Log::error(get_class($this) . '::' . $method . ' Database error: ' . $message);
+            $this->logService->error(get_class($this) . '::' . $method . ' Database error: ' . $message);
             return;
         }
-        Log::error(get_class($this) . '::' . $method . ' Error: ' . $message);
+        $this->logService->error(get_class($this) . '::' . $method . ' Error: ' . $message);
         return;
     }
 }

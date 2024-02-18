@@ -13,8 +13,9 @@ trait UuidableTrait
      */
     protected static function bootUuidableTrait()
     {
-        static::creating(function ($model) {
-            $model->id = substr(str_replace('-', '', Str::uuid()), 0, 6);
+        $strHelper = app(Str::class);
+        static::creating(function ($model) use($strHelper) {
+            $model->id = substr(str_replace('-', '', $strHelper->uuid()), 0, 6);
         });
     }
 }

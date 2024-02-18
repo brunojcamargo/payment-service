@@ -7,13 +7,13 @@ use Illuminate\Database\Eloquent\Collection;
 
 interface WalletRepositoryInterface
 {
-    public function findOrFail($id) : ?Wallet;
+    public function findOrFail($userId) : ?Wallet;
 
     public function getAll() : Collection;
 
     public function createOrFail(array $data) : ?Wallet;
 
-    public function updateOrFail($id, array $data) : ?Wallet;
+    public function updateOrFail($userId, array $data) : ?Wallet;
 
-    public function deleteOrFail($id) : bool;
+    public function deleteOrFail($userId) : bool;
 }

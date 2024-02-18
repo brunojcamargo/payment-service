@@ -7,13 +7,13 @@ use Illuminate\Database\Eloquent\Collection;
 
 interface UserRepositoryInterface
 {
-    public function findOrFail($id) : ?User ;
+    public function findOrFail($userId) : ?User ;
 
     public function getAll() : Collection;
 
     public function createOrFail(array $data) : ?User;
 
-    public function updateOrFail($id, array $data) : ?User;
+    public function updateOrFail($userId, array $data) : ?User;
 
-    public function deleteOrFail($id) : bool;
+    public function deleteOrFail($userId) : bool;
 }
