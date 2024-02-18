@@ -49,4 +49,19 @@ class ApiTransactionTest extends TestCase
             ]
         ]);
     }
+
+    public function test_api_get_transactions_valid_from_required(): void
+    {
+        $response = $this->json('GET', '/api/transfers');
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+
+        $response->assertJson([
+            'error' => true,
+            'code' => 422,
+            'data' => [
+                'from' => ["O campo from é obrigatório."]
+            ]
+        ]);
+    }
 }
