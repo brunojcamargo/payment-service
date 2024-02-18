@@ -205,6 +205,55 @@ class WalletService
         return false;
     }
 
+    public function updateBalanceForCancelTransfer(Transaction $transaction): WalletResponse
+    {
+        $this->response = new WalletResponse;
+        $this->userService = new UserService;
+
+        $userResponseTo = $this->userService->findById($transaction->to);
+        $userResponseFrom = $this->userService->findById($transaction->from);
+
+        if (!$this->isValidUserResponse($userResponseTo) || !$this->isValidUserResponse($userResponseFrom)) {
+            $this->response->error = true;
+            $this->response->message = 'Usuários da operação inválidos';
+            return $this->response;
+        }
+
+        $walletTo = $userResponseTo->data->first()->wallet()->first();
+        $walletFrom = $userResponseFrom->data->first()->wallet()->first();
+
+        if (!$this->isValidWallet($walletTo) || !$this->isValidWallet($walletFrom)) {
+            $this->response->error = true;
+            $this->response->message = 'Carteiras da operação inválidas';
+            return $this->response;
+        }
+
+        if (!$this->hasAmountAvailable($transaction->to, $transaction->value)) {
+            $this->response->error = true;
+            $this->response->message = 'Usuário de destino não possui saldo para o estorno.';
+            return $this->response;
+        }
+
+        $this->database = app(DatabaseManager::class);
+
+        $this->database->beginTransaction();
+        if ($this->addAmountInBalance($walletFrom, $transaction->value)) {
+            if (!$this->removeAmountInBalance($walletTo, $transaction->value)) {
+                $this->database->rollBack();
+                $this->response->error = true;
+                $this->response->message = 'Erro interno ao realizar a operação. tente novamente em alguns minutos.';
+                return $this->response;
+            }
+            $this->database->commit();
+            $this->response->message = 'Estorno realisado com sucesso.';
+            return $this->response;
+        }
+        $this->database->rollBack();
+        $this->response->error = true;
+        $this->response->message = 'Erro interno ao realizar a operação. tente novamente em alguns minutos.';
+        return $this->response;
+    }
+
     private function isValidUserResponse(?UserResponse $userResponse): bool
     {
         return $userResponse instanceof UserResponse && !$userResponse->error;

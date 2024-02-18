@@ -10,6 +10,7 @@ class WalletResponse
     public bool $error;
     public int $code;
     public Collection $data;
+    public string $message = "";
 
     public function __construct() {
         $this->error = false;

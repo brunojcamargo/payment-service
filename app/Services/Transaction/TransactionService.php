@@ -200,4 +200,50 @@ class TransactionService
 
         return $this->response;
     }
+
+    public function cancelTransaction(array $data) : TransactionResponse
+    {
+        $this->response = new TransactionResponse;
+
+        $this->transactionRepo = app(TransactionRepositoryInterface::class);
+
+        $transaction = $this->transactionRepo->findOrFail($data['transactionId'] ?? '');
+
+        if(!$this->isValidTransaction($transaction)){
+            $this->response->error = true;
+            $this->response->code = Response::HTTP_NOT_FOUND;
+            $this->response->message = 'Transação não encontrada.';
+            return $this->response;
+        }
+
+        $fromUserId = $data['from'] ?? '';
+
+        if($transaction->from != $fromUserId){
+            $this->response->error = true;
+            $this->response->code = Response::HTTP_UNAUTHORIZED;
+            $this->response->message = 'Operação não permitida.';
+            return $this->response;
+        }
+
+        $this->walletService = new WalletService;
+        $responseWallet = $this->walletService->updateBalanceForCancelTransfer($transaction);
+
+        if($responseWallet->error){
+            $this->response->error = true;
+            $this->response->code = Response::HTTP_BAD_REQUEST;
+            $this->response->message = $responseWallet->message;
+            return $this->response;
+        }
+
+        if($this->updateStatusTransaction('canceled', $transaction)){
+            $this->response->code = Response::HTTP_OK;
+            $this->response->message = $responseWallet->message;
+            return $this->response;
+        }
+
+        $this->response->error = true;
+        $this->response->code = Response::HTTP_INTERNAL_SERVER_ERROR;
+        $this->response->message = 'Erro interno. entre em contato com o suporte.';
+        return $this->response;
+    }
 }
